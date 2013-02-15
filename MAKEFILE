@@ -1,0 +1,63 @@
+.ERASE
+.SILENT
+
+FINAL = 1
+
+.BEFORE
+	echo Making graf...
+
+# Compiler and linker definitions:
+CC    = wpp386
+LINK  = wlink
+
+!ifeq FINAL 1
+# Pentium optimization options suggested by Dima Slepichev, 2:5030/1350.13
+C_OPS = /One=10000atil+mr /zp1 /5r /fp5 /fpi87 /d0 /s /mf /xss /fo=$^@ /bt=dos /dFINAL /eq /zq -Ih;\Project\Sys
+L_OPS = sys zrdx op {stack=32768 quiet}
+OBJP  = \Devel\OBJ\FINAL\
+!else
+C_OPS = /Oneatx /zp4 /5r /fp5 /fpi87 /d1 /d3 /w1 /mf /sg /hw /zq /fo=$^@ /bt=dos
+L_OPS = sys zrdx op {stack=32768 quiet} debug watcom a
+OBJP  = \Devel\OBJ\DEBUG\
+!endif
+
+main: graf.lib
+
+clean
+	echo Cleaning...
+	for %i in ($OBJS) do if exist %i del %i
+	if exist graf.lib del graf.lib
+
+# File dependencies:
+
+$(OBJP)PIXMAP.obj: src\PIXMAP.CPP \Project\Sys\IMem.h h\Pixmap.h h\Graf.h &
+  \Project\Sys\Exception.h
+	echo Compiling PIXMAP.CPP...
+	$(CC) $(C_OPS) src\PIXMAP.CPP
+
+$(OBJP)VBE.obj: src\VBE.CPP \Project\Sys\Tailor.h h\VBE.h \Project\Sys\DPMI.h &
+  \Project\Sys\Exception.h
+	echo Compiling VBE.CPP...
+	$(CC) $(C_OPS) src\VBE.CPP
+
+$(OBJP)FONT.obj: src\FONT.CPP h\Font.h \Project\Sys\File.h \Project\Sys\Exception.h
+	echo Compiling FONT.CPP...
+	$(CC) $(C_OPS) src\FONT.CPP
+
+$(OBJP)GRAF.obj: src\GRAF.CPP \Project\Sys\IMem.h \Project\Sys\CPU.h h\Graf.h
+	echo Compiling GRAF.CPP...
+	$(CC) $(C_OPS) src\GRAF.CPP
+
+$(OBJP)TEXT.obj: src\TEXT.CPP h\Font.h
+	echo Compiling TEXT.CPP...
+	$(CC) $(C_OPS) src\TEXT.CPP
+
+OBJS = $(OBJP)PIXMAP.obj $(OBJP)VBE.obj $(OBJP)FONT.obj $(OBJP)GRAF.obj &
+  $(OBJP)TEXT.obj
+LIBS =
+
+# main file
+graf.lib: $(OBJS) $(LIBS)
+   echo Librarying...
+	wlib -b -n -q graf.lib $(OBJS)
+	copy graf.lib \Devel\LIB
